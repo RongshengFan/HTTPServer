@@ -52,10 +52,6 @@ HttpServer/
 │   │   ├── Session.cpp
 │   │   ├── SessionManager.cpp
 │   │   └── SessionStorage.cpp
-│   ├── ssl/
-│   │   ├── SslContext.cpp
-│   │   ├── SslConfig.cpp
-│   │   └── SslConnection.cpp
 │   └── utils/
 │       ├── FileUtil.cpp
 │       └── db/
@@ -71,7 +67,6 @@ HttpServer/
 - **中间件模块**：处理 HTTP 请求和响应的函数或组件，它在客户端请求到达服务器处理逻辑之前、或者服务器响应返回客户端之前执行
 - **会话管理模块**：基于Session实现，Session是一种用于管理用户会话状态的技术，它可以在多个请求之间保持用户状态的一致性。
 - **数据库模块**：数据库连接池通过复用数据库连接来提高应用程序的性能和资源利用效率，减少连接创建和销毁的开销。
-- **SSL模块**：用于处理HTTPS请求和响应，包括请求的解析、响应的生成和发送。
 
 ## 项目环境
 ### 环境依赖
@@ -130,7 +125,7 @@ sudo ./simple_server
 
 ## 总结
 - HttpServer是一个基于C++的高性能HTTP服务器框架，旨在简化Web应用的开发与部署。
-- 通过结合Reactor模型、OpenSSL和多线程技术，HttpServer提供了高效的请求处理、安全通信和并发支持。
+- 通过结合Reactor模型和多线程技术，HttpServer提供了高效的请求处理和并发支持。
 - 该框架支持动态路由、中间件和会话管理，允许开发者专注于业务逻辑的实现。
 - 项目的设计考虑了性能和扩展性，适合在现代Web服务中使用。
 - 未来将继续完善，欢迎更多开发者参与学习与贡献。
