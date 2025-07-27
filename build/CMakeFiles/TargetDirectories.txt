@@ -1,0 +1,3 @@
+/home/ubuntu/HTTPServer/build/CMakeFiles/simple_server.dir
+/home/ubuntu/HTTPServer/build/CMakeFiles/edit_cache.dir
+/home/ubuntu/HTTPServer/build/CMakeFiles/rebuild_cache.dir

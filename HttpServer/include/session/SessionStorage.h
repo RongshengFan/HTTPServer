@@ -25,6 +25,7 @@ public:
     void remove(const std::string& sessionId) override;
 private:
     std::unordered_map<std::string, std::shared_ptr<Session>> sessions_;
+    mutable std::mutex mutex_;
 };
 
 } // namespace session

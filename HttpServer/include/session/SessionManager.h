@@ -38,6 +38,7 @@ private:
 private:
     std::unique_ptr<SessionStorage> storage_;
     std::mt19937 rng_; // 用于生成随机会话id
+    mutable std::mutex rng_mutex_;
 };
 
 } // namespace session

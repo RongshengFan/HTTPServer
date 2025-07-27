@@ -45,6 +45,7 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
 // 生成唯一的会话标识符，确保会话的唯一性和安全性
 std::string SessionManager::generateSessionId()
 {
+    std::lock_guard<std::mutex> lock(rng_mutex_);
     std::stringstream ss;
     std::uniform_int_distribution<> dist(0, 15);
 
@@ -58,14 +59,27 @@ std::string SessionManager::generateSessionId()
 
 void SessionManager::destroySession(const std::string& sessionId)
 {
+
     storage_->remove(sessionId);
 }
 
 void SessionManager::cleanExpiredSessions()
 {
-    // 注意：这个实现依赖于具体的存储实现
-    // 对于内存存储，可以在加载时检查是否过期
-    // 对于其他存储的实现，可能需要定期清理过期会话
+    // 清理过期的会话,内存存储实现
+    std::vector<std::string> expiredSessions;
+    for (const auto& pair : storage_->getAllSessions())
+    {
+        if (pair.second->isExpired())
+        {
+            expiredSessions.push_back(pair.first);
+        }
+    }
+
+    for (const auto& sessionId : expiredSessions)
+    {
+        storage_->remove(sessionId);
+    }
+    std::cout << "Cleaned " << expiredSessions.size() << " expired sessions." << std::endl;
 }
 
 std::string SessionManager::getSessionIdFromCookie(const HttpRequest& req)
