@@ -57,5 +57,5 @@ void Session::clear()
     data_.clear();
 }
 
-} // namespace session
-} // namespace http
+} //namespace session
+} //namespace http
