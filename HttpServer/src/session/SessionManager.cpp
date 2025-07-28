@@ -66,20 +66,7 @@ void SessionManager::destroySession(const std::string& sessionId)
 void SessionManager::cleanExpiredSessions()
 {
     // 清理过期的会话,内存存储实现
-    std::vector<std::string> expiredSessions;
-    for (const auto& pair : storage_->getAllSessions())
-    {
-        if (pair.second->isExpired())
-        {
-            expiredSessions.push_back(pair.first);
-        }
-    }
-
-    for (const auto& sessionId : expiredSessions)
-    {
-        storage_->remove(sessionId);
-    }
-    std::cout << "Cleaned " << expiredSessions.size() << " expired sessions." << std::endl;
+    
 }
 
 std::string SessionManager::getSessionIdFromCookie(const HttpRequest& req)

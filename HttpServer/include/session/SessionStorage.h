@@ -1,7 +1,8 @@
 #pragma once
 #include "Session.h"
 #include <memory>
-
+#include <mutex>
+#include <unordered_map>
 namespace http
 {
 namespace session

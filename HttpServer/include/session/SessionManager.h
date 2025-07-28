@@ -5,7 +5,7 @@
 #include "../http/HttpResponse.h"
 #include <memory>
 #include <random>
-
+#include <mutex>
 namespace http
 {
 namespace session
