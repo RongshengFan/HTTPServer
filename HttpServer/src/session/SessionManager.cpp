@@ -17,9 +17,13 @@ SessionManager::SessionManager(std::unique_ptr<SessionStorage> storage)
 // 从请求中获取或创建会话，也就是说，如果请求中包含会话ID，则从存储中加载会话，否则创建一个新的会话
 std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, HttpResponse* resp)
 {   
+    // 先清除过期的会话
+    cleanExpiredSessions();
+    
     std::string sessionId = getSessionIdFromCookie(req);
     
     std::shared_ptr<Session> session;
+
 
     if (!sessionId.empty())
     {
@@ -65,7 +69,7 @@ void SessionManager::destroySession(const std::string& sessionId)
 void SessionManager::cleanExpiredSessions()
 {
     // 清理过期的会话,内存存储实现
-     storage_->cleanExpiredSessions();
+     storage_->cleanExpiredSession();
 }
 
 std::string SessionManager::getSessionIdFromCookie(const HttpRequest& req)

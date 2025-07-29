@@ -15,7 +15,7 @@ public:
     virtual void save(std::shared_ptr<Session> session) = 0;
     virtual std::shared_ptr<Session> load(const std::string& sessionId) = 0;
     virtual void remove(const std::string& sessionId) = 0;
-    virtual void cleanExpiredSessions();
+    virtual void cleanExpiredSession() = 0;
 };
 
 // 基于内存的会话存储实现
@@ -25,7 +25,7 @@ public:
     void save(std::shared_ptr<Session> session) override;
     std::shared_ptr<Session> load(const std::string& sessionId) override;
     void remove(const std::string& sessionId) override;
-    void cleanExpiredSessions() override;
+    void cleanExpiredSession() override;
 private:
     std::unordered_map<std::string, std::shared_ptr<Session>> sessions_;
     mutable std::mutex mutex_;
