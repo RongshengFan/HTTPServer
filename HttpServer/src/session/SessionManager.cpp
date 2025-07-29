@@ -59,14 +59,13 @@ std::string SessionManager::generateSessionId()
 
 void SessionManager::destroySession(const std::string& sessionId)
 {
-
     storage_->remove(sessionId);
 }
 
 void SessionManager::cleanExpiredSessions()
 {
     // 清理过期的会话,内存存储实现
-    
+     storage_->cleanExpiredSessions();
 }
 
 std::string SessionManager::getSessionIdFromCookie(const HttpRequest& req)

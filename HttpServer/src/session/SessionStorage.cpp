@@ -43,5 +43,21 @@ void MemorySessionStorage::remove(const std::string& sessionId)
     sessions_.erase(sessionId);
 }
 
+void MemorySessionStorage::cleanExpiredSessions()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto it = sessions_.begin(); it != sessions_.end();)
+    {
+        if (it->second->isExpired())
+        {
+            it = sessions_.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
 } // namespace session
 } // namespace http
