@@ -1,6 +1,6 @@
 #include "../include/session/SessionStorage.h"
 #include <iostream>
-
+#include <muduo/base/Logging.h>
 namespace http
 {
 
@@ -12,6 +12,7 @@ void MemorySessionStorage::save(std::shared_ptr<Session> session)
     // 创建会话副本并存储
     std::lock_guard<std::mutex> lock(mutex_);
     sessions_[session->getId()] = session;
+     LOG_INFO << "Session " << session->getId() << " saved to memory storage.";
 }
 
 // 通过会话ID从存储中加载会话

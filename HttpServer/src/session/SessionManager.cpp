@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-
+#include <muduo/base/Logging.h>
 namespace http
 {
 namespace session
@@ -28,6 +28,14 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
     if (!sessionId.empty())
     {
         session = storage_->load(sessionId);
+        if (session)
+        {
+            LOG_INFO << "Session " << sessionId << " loaded from storage.";
+        }
+        else
+        {
+            LOG_INFO << "Session " << sessionId << " not found or expired in storage.";
+        }
     }
 
     if (!session || session->isExpired())
@@ -35,14 +43,17 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
         sessionId = generateSessionId();
         session = std::make_shared<Session>(sessionId, this);
         setSessionCookie(sessionId, resp);
+        storage_->save(session); 
+        LOG_INFO << "New session " << sessionId << " created.";
     }
     else 
     {
         session->setManager(this); // 为现有会话设置管理器
-    }
+        LOG_INFO << "Existing session " << sessionId << " reused.";
+    } 
 
     session->refresh();
-    storage_->save(session);  // 这里可能有问题，需要确保正确保存会话
+   
     return session;
 }
 
