@@ -30,11 +30,11 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
         session = storage_->load(sessionId);
         if (session)
         {
-            LOG_INFO << "Session " << sessionId << " loaded from storage.";
+            std::cout << "Session " << sessionId << " loaded from storage."<< std::endl;
         }
         else
         {
-            LOG_INFO << "Session " << sessionId << " not found or expired in storage.";
+            std::cout << "Session " << sessionId << " not found or expired in storage."<< std::endl;
         }
     }
 
@@ -44,12 +44,12 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
         session = std::make_shared<Session>(sessionId, this);
         setSessionCookie(sessionId, resp);
         storage_->save(session); 
-        LOG_INFO << "New session " << sessionId << " created.";
+        std::cout << "New session " << sessionId << " created."<< std::endl;
     }
     else 
     {
         session->setManager(this); // 为现有会话设置管理器
-        LOG_INFO << "Existing session " << sessionId << " reused.";
+        std::cout << "Existing session " << sessionId << " reused." << std::endl;
     } 
 
     session->refresh();

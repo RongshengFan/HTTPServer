@@ -26,7 +26,7 @@ bool Session::isExpired() const
 void Session::refresh()
 {
     expiryTime_ = std::chrono::system_clock::now() + std::chrono::seconds(maxAge_);
-    LOG_INFO << "Session " << sessionId_ << " refreshed, new expiry time: " << std::chrono::system_clock::to_time_t(expiryTime_);
+    std::cout << "Session " << sessionId_ << " refreshed, new expiry time: " << std::chrono::system_clock::to_time_t(expiryTime_) << std::endl;
 
 }
 

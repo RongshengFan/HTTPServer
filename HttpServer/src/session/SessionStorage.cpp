@@ -49,11 +49,12 @@ void MemorySessionStorage::cleanExpiredSession()
 
     for (auto it = sessions_.begin(); it != sessions_.end();)
     {
-        std::cout << "clean expired session" << std::endl;
+        
         if (it->second->isExpired())
         {
             std::lock_guard<std::mutex> lock(mutex_);
             it = sessions_.erase(it);
+            std::cout << "clean expired session: " << it->second->getId() << std::endl;
         }
         else
         {
