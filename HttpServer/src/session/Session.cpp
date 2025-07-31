@@ -2,6 +2,7 @@
 
 #include "../include/session/SessionManager.h"
 #include <muduo/base/Logging.h>
+#include <iostream>
 
 namespace http
 {

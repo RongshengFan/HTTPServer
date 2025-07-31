@@ -17,7 +17,6 @@ SessionManager::SessionManager(std::unique_ptr<SessionStorage> storage)
 // 从请求中获取或创建会话，也就是说，如果请求中包含会话ID，则从存储中加载会话，否则创建一个新的会话
 std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, HttpResponse* resp)
 {   
-    // 先清除过期的会话
     cleanExpiredSessions();
     
     std::string sessionId = getSessionIdFromCookie(req);
@@ -25,31 +24,20 @@ std::shared_ptr<Session> SessionManager::getSession(const HttpRequest& req, Http
     std::shared_ptr<Session> session;
 
 
-    if (!sessionId.empty())
-    {
+    if (!sessionId.empty()){
         session = storage_->load(sessionId);
-        if (session)
-        {
-            std::cout << "Session " << sessionId << " loaded from storage."<< std::endl;
-        }
-        else
-        {
-            std::cout << "Session " << sessionId << " not found or expired in storage."<< std::endl;
-        }
     }
 
-    if (!session || session->isExpired())
-    {
+    if (!session || session->isExpired()){
         sessionId = generateSessionId();
         session = std::make_shared<Session>(sessionId, this);
         setSessionCookie(sessionId, resp);
-        storage_->save(session); 
         std::cout << "New session " << sessionId << " created."<< std::endl;
-    }
-    else 
-    {
+
+        storage_->save(session); 
+    }else {
         session->setManager(this); // 为现有会话设置管理器
-        std::cout << "Existing session " << sessionId << " reused." << std::endl;
+        std::cout << "Existed session " << sessionId << " reused." << std::endl;
     } 
 
     session->refresh();
@@ -69,6 +57,8 @@ std::string SessionManager::generateSessionId()
     {
         ss << std::hex << dist(rng_);
     }
+
+    std::cout << "Generated session ID: " << ss.str()<< " Success." << std::endl;
     return ss.str();
 }
 
@@ -114,6 +104,7 @@ void SessionManager::setSessionCookie(const std::string& sessionId, HttpResponse
     // 设置会话ID到响应头中，作为Cookie
     std::string cookie = "sessionId=" + sessionId + "; Path=/; HttpOnly";
     resp->addHeader("Set-Cookie", cookie);
+    std::cout << "Set session cookie: " << cookie <<" Success."<< std::endl;
 }
 
 } // namespace session
