@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <thread>
-
+#include <bits/stdc++.h>
 
 AiGame::AiGame(int userId)
     : gameOver_(false)
@@ -127,96 +127,96 @@ bool AiGame::checkWin(int x, int y, const std::string& player)
     return false;
 }
 
-
-std::pair<int, int> AiGame::getBestMove()
-{
-    std::pair<int, int> bestMove = {-1, -1}; // 最佳落子位置
-    int maxThreat = -1;                      // 记录最大的威胁分数
-
-    // 1. 优先尝试进攻获胜或阻止玩家获胜
-    for (int r = 0; r < BOARD_SIZE; r++) 
-    {
-        for (int c = 0; c < BOARD_SIZE; c++) 
-        {
-            if (board_[r][c] != EMPTY) continue; // 确保当前位置为空闲
-
-            // 模拟 AI 落子，判断是否可以获胜
-            board_[r][c] = AI_PLAYER;
-            if (checkWin(r, c, AI_PLAYER)) 
-            {
-                // board_[r][c] = AI_PLAYER; // 恢复棋盘
-                return {r, c};      // 立即获胜
-            }
-            board_[r][c] = EMPTY;
-
-            // 模拟玩家落子，判断是否需要防守
-            board_[r][c] = HUMAN_PLAYER;
-            if (checkWin(r, c, HUMAN_PLAYER)) 
-            {
-                board_[r][c] = AI_PLAYER; // 恢复棋盘
-                return {r, c};      // 立即防守
-            }
-            board_[r][c] = EMPTY;
-        }
-    }
-
-    // 2. 评估每个空位的威胁程度，选择最佳防守位置
-    for (int r = 0; r < BOARD_SIZE; r++) 
-    {
-        for (int c = 0; c < BOARD_SIZE; c++) 
-        {
-            if (board_[r][c] != EMPTY) continue; // 确保当前位置为空闲
-
-            int threatLevel = evaluateThreat(r, c); // 评估威胁程度
-            if (threatLevel > maxThreat) 
-            {
-                maxThreat = threatLevel;
-                bestMove = {r, c};
-            }
-        }
-    }
-
-    // 3. 如果找不到威胁点，选择靠近玩家或已有棋子的空位
-    if (bestMove.first == -1) 
-    {
-        std::vector<std::pair<int, int>> nearCells;
-
-        for (int r = 0; r < BOARD_SIZE; r++) 
-        {
-            for (int c = 0; c < BOARD_SIZE; c++) 
-            {
-                if (board_[r][c] == EMPTY && isNearOccupied(r, c)) 
-                { // 确保当前位置为空闲且靠近已有棋子
-                    nearCells.push_back({r, c});
-                }
-            }
-        }
-
-        // 如果找到靠近已有棋子的空位，随机选择一个
-        if (!nearCells.empty()) 
-		{
-            int num = rand();
-			board_[nearCells[num % nearCells.size()].first][nearCells[num % nearCells.size()].second] = AI_PLAYER;
-            return nearCells[num % nearCells.size()];
-        }
-
-        // 4. 如果所有策略都无效，选择第一个空位（保证 AI 落子）
-        for (int r = 0; r < BOARD_SIZE; r++) 
-        {
-            for (int c = 0; c < BOARD_SIZE; c++) 
-            {
-                if (board_[r][c] == EMPTY) 
-				{
-					board_[r][c] = AI_PLAYER;
-                    return {r, c}; // 返回第一个空位
-                }
-            }
-        }
-    }
-	
-	board_[bestMove.first][bestMove.second] = AI_PLAYER;
-    return bestMove; // 返回最佳防守点或其他策略的结果
-}
+// std::pair<int, int> AiGame::getBestMove()
+// {
+//     std::pair<int, int> bestMove = {-1, -1}; // 最佳落子位置
+//     int maxThreat = -1;                      // 记录最大的威胁分数
+//
+//     // 1. 优先尝试进攻获胜或阻止玩家获胜
+//     for (int r = 0; r < BOARD_SIZE; r++) 
+//     {
+//         for (int c = 0; c < BOARD_SIZE; c++) 
+//         {
+//             if (board_[r][c] != EMPTY) continue; // 确保当前位置为空闲
+//
+//             // 模拟 AI 落子，判断是否可以获胜
+//             board_[r][c] = AI_PLAYER;
+//             if (checkWin(r, c, AI_PLAYER)) 
+//             {
+//                 // board_[r][c] = AI_PLAYER; // 恢复棋盘
+//                 return {r, c};      // 立即获胜
+//             }
+//             board_[r][c] = EMPTY;
+//
+//             // 模拟玩家落子，判断是否需要防守
+//             board_[r][c] = HUMAN_PLAYER;
+//             if (checkWin(r, c, HUMAN_PLAYER)) 
+//             {
+//                 board_[r][c] = AI_PLAYER; // 恢复棋盘
+//                 return {r, c};      // 立即防守
+//             }
+//             board_[r][c] = EMPTY;
+//         }
+//     }
+//
+//     // 2. 评估每个空位的威胁程度，选择最佳防守位置
+//     for (int r = 0; r < BOARD_SIZE; r++) 
+//     {
+//         for (int c = 0; c < BOARD_SIZE; c++) 
+//         {
+//             if (board_[r][c] != EMPTY) continue; // 确保当前位置为空闲
+//
+//             int threatLevel = evaluateThreat(r, c); // 评估威胁程度
+//             if (threatLevel > maxThreat) 
+//             {
+//                 maxThreat = threatLevel;
+//                 bestMove = {r, c};
+//             }
+//         }
+//     }
+//
+//     // 3. 如果找不到威胁点，选择靠近玩家或已有棋子的空位
+//     if (bestMove.first == -1) 
+//     {
+//         std::vector<std::pair<int, int>> nearCells;
+//
+//         for (int r = 0; r < BOARD_SIZE; r++) 
+//         {
+//             for (int c = 0; c < BOARD_SIZE; c++) 
+//             {
+//                 if (board_[r][c] == EMPTY && isNearOccupied(r, c)) 
+//                 { // 确保当前位置为空闲且靠近已有棋子
+//                     nearCells.push_back({r, c});
+//                 }
+//             }
+//         }
+//
+//         // 如果找到靠近已有棋子的空位，随机选择一个
+//         if (!nearCells.empty()) 
+// 		{
+//             int num = rand();
+// 			board_[nearCells[num % nearCells.size()].first][nearCells[num % nearCells.size()].second] = AI_PLAYER;
+//             return nearCells[num % nearCells.size()];
+//         }
+//
+//         // 4. 如果所有策略都无效，选择第一个空位（保证 AI 落子）
+//         for (int r = 0; r < BOARD_SIZE; r++) 
+//         {
+//             for (int c = 0; c < BOARD_SIZE; c++) 
+//             {
+//                 if (board_[r][c] == EMPTY) 
+// 				{
+// 					board_[r][c] = AI_PLAYER;
+//                     return {r, c}; // 返回第一个空位
+//                 }
+//             }
+//         }
+//     }
+//
+// 	board_[bestMove.first][bestMove.second] = AI_PLAYER;
+//     return bestMove; // 返回最佳防守点或其他策略的结果
+// }
+//
 
 // 优化后的威胁评估函数
 int AiGame::evaluateThreat(int r, int c, const std::string& player) 
@@ -424,7 +424,7 @@ std::vector<std::pair<int, int>> AiGame::getCandidateMoves()
     }
     
     // 去重
-    std::sort(candidates.begin(), candidates.end());
+    sort(candidates.begin(), candidates.end());
     auto last = std::unique(candidates.begin(), candidates.end());
     candidates.erase(last, candidates.end());
     
