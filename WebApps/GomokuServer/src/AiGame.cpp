@@ -217,3 +217,288 @@ std::pair<int, int> AiGame::getBestMove()
 	board_[bestMove.first][bestMove.second] = AI_PLAYER;
     return bestMove; // 返回最佳防守点或其他策略的结果
 }
+
+// 优化后的威胁评估函数
+int AiGame::evaluateThreat(int r, int c, const std::string& player) 
+{
+    if (board_[r][c] != EMPTY) return 0;
+    
+    // 临时放置棋子进行评估
+    board_[r][c] = player;
+    
+    int score = 0;
+    const int directions[4][2] = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
+    const std::string opponent = (player == AI_PLAYER) ? HUMAN_PLAYER : AI_PLAYER;
+    
+    for (auto& dir : directions) 
+    {
+        // 计算当前方向上的连续棋子数及两端是否有空位
+        int consecutive = 1;  // 当前位置的棋子
+        bool blockedLeft = false;
+        bool blockedRight = false;
+        
+        // 向左/上检查
+        for (int i = 1; i <= 4; i++) 
+        {
+            int nr = r - i * dir[0], nc = c - i * dir[1];
+            if (!isInBoard(nr, nc) || board_[nr][nc] == opponent) 
+            {
+                blockedLeft = true;
+                break;
+            }
+            if (board_[nr][nc] == player) 
+                consecutive++;
+            else  // 空位
+                break;
+        }
+        
+        // 向右/下检查
+        for (int i = 1; i <= 4; i++) 
+        {
+            int nr = r + i * dir[0], nc = c + i * dir[1];
+            if (!isInBoard(nr, nc) || board_[nr][nc] == opponent) 
+            {
+                blockedRight = true;
+                break;
+            }
+            if (board_[nr][nc] == player) 
+                consecutive++;
+            else  // 空位
+                break;
+        }
+        
+        // 根据连子数和是否被阻挡评分
+        if (consecutive >= 5) 
+        {
+            score += 100000;  // 五连，必胜
+        }
+        else if (consecutive == 4) 
+        {
+            // 冲四（一端挡，一端空）或活四（两端空）
+            if (!blockedLeft || !blockedRight) 
+                score += (blockedLeft && blockedRight) ? 100 : 10000;
+        }
+        else if (consecutive == 3) 
+        {
+            // 活三（两端空）或冲三（一端挡）
+            int openEnds = (!blockedLeft ? 1 : 0) + (!blockedRight ? 1 : 0);
+            score += (openEnds == 2) ? 1000 : (openEnds == 1 ? 100 : 10);
+        }
+        else if (consecutive == 2) 
+        {
+            int openEnds = (!blockedLeft ? 1 : 0) + (!blockedRight ? 1 : 0);
+            score += (openEnds == 2) ? 50 : (openEnds == 1 ? 10 : 5);
+        }
+        else if (consecutive == 1) 
+        {
+            int openEnds = (!blockedLeft ? 1 : 0) + (!blockedRight ? 1 : 0);
+            score += (openEnds == 2) ? 5 : 1;
+        }
+    }
+    
+    // 恢复棋盘
+    board_[r][c] = EMPTY;
+    return score;
+}
+
+// 极小极大算法搜索最佳走法
+int AiGame::minimax(int depth, bool isMaximizing, int alpha, int beta) 
+{
+    // 到达搜索深度或游戏结束
+    if (depth == 0) 
+    {
+        int aiScore = 0, humanScore = 0;
+        // 评估当前棋盘状态
+        for (int i = 0; i < BOARD_SIZE; i++) 
+        {
+            for (int j = 0; j < BOARD_SIZE; j++) 
+            {
+                if (board_[i][j] == EMPTY) 
+                {
+                    aiScore += evaluateThreat(i, j, AI_PLAYER);
+                    humanScore += evaluateThreat(i, j, HUMAN_PLAYER);
+                }
+            }
+        }
+        return aiScore - humanScore;  // AI分数减去人类分数
+    }
+    
+    // 检查是否有玩家已经获胜
+    if (checkWin(lastMove_.first, lastMove_.second, AI_PLAYER)) 
+        return 100000 + depth;
+    if (checkWin(lastMove_.first, lastMove_.second, HUMAN_PLAYER)) 
+        return -100000 - depth;
+    if (isDraw()) 
+        return 0;
+    
+    if (isMaximizing) 
+    {
+        // AI回合，最大化分数
+        int maxScore = -1000000;
+        std::vector<std::pair<int, int>> candidates = getCandidateMoves();
+        
+        for (auto& move : candidates) 
+        {
+            int x = move.first, y = move.second;
+            if (board_[x][y] != EMPTY) continue;
+            
+            board_[x][y] = AI_PLAYER;
+            lastMove_ = {x, y};
+            int score = minimax(depth - 1, false, alpha, beta);
+            board_[x][y] = EMPTY;
+            
+            maxScore = std::max(score, maxScore);
+            alpha = std::max(alpha, score);
+            
+            if (beta <= alpha) break;  // Alpha剪枝
+        }
+        return maxScore;
+    } 
+    else 
+    {
+        // 人类回合，最小化分数
+        int minScore = 1000000;
+        std::vector<std::pair<int, int>> candidates = getCandidateMoves();
+        
+        for (auto& move : candidates) 
+        {
+            int x = move.first, y = move.second;
+            if (board_[x][y] != EMPTY) continue;
+            
+            board_[x][y] = HUMAN_PLAYER;
+            lastMove_ = {x, y};
+            int score = minimax(depth - 1, true, alpha, beta);
+            board_[x][y] = EMPTY;
+            
+            minScore = std::min(score, minScore);
+            beta = std::min(beta, score);
+            
+            if (beta <= alpha) break;  // Beta剪枝
+        }
+        return minScore;
+    }
+}
+
+// 获取候选落子位置（减少搜索范围，提高效率）
+std::vector<std::pair<int, int>> AiGame::getCandidateMoves() 
+{
+    std::vector<std::pair<int, int>> candidates;
+    
+    // 优先考虑已有棋子周围的位置
+    for (int i = 0; i < BOARD_SIZE; i++) 
+    {
+        for (int j = 0; j < BOARD_SIZE; j++) 
+        {
+            if (board_[i][j] != EMPTY) 
+            {
+                // 检查周围3x3范围内的空位
+                for (int dx = -2; dx <= 2; dx++) 
+                {
+                    for (int dy = -2; dy <= 2; dy++) 
+                    {
+                        int x = i + dx;
+                        int y = j + dy;
+                        if (isInBoard(x, y) && board_[x][y] == EMPTY) 
+                        {
+                            candidates.push_back({x, y});
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // 如果是开局，添加中心附近的位置
+    if (candidates.empty()) 
+    {
+        for (int i = BOARD_SIZE/2 - 2; i <= BOARD_SIZE/2 + 2; i++) 
+        {
+            for (int j = BOARD_SIZE/2 - 2; j <= BOARD_SIZE/2 + 2; j++) 
+            {
+                if (isInBoard(i, j)) 
+                {
+                    candidates.push_back({i, j});
+                }
+            }
+        }
+    }
+    
+    // 去重
+    std::sort(candidates.begin(), candidates.end());
+    auto last = std::unique(candidates.begin(), candidates.end());
+    candidates.erase(last, candidates.end());
+    
+    return candidates;
+}
+
+std::pair<int, int> AiGame::getBestMove()
+{
+    // 1. 优先检查是否能立即获胜或需要立即防守
+    for (int r = 0; r < BOARD_SIZE; r++) 
+    {
+        for (int c = 0; c < BOARD_SIZE; c++) 
+        {
+            if (board_[r][c] != EMPTY) continue;
+
+            // 检查AI是否能一步获胜
+            board_[r][c] = AI_PLAYER;
+            if (checkWin(r, c, AI_PLAYER)) 
+            {
+                board_[r][c] = EMPTY;
+                return {r, c};
+            }
+            board_[r][c] = EMPTY;
+
+            // 检查是否需要防守以阻止人类获胜
+            board_[r][c] = HUMAN_PLAYER;
+            if (checkWin(r, c, HUMAN_PLAYER)) 
+            {
+                board_[r][c] = EMPTY;
+                return {r, c};
+            }
+            board_[r][c] = EMPTY;
+        }
+    }
+
+    // 2. 使用极小极大算法搜索最佳走法
+    std::vector<std::pair<int, int>> candidates = getCandidateMoves();
+    if (candidates.empty()) 
+    {
+        // 如果没有候选位置，返回第一个空位（通常是游戏初期）
+        for (int r = 0; r < BOARD_SIZE; r++) 
+        {
+            for (int c = 0; c < BOARD_SIZE; c++) 
+            {
+                if (board_[r][c] == EMPTY) 
+                {
+                    return {r, c};
+                }
+            }
+        }
+    }
+
+    // 根据游戏阶段调整搜索深度（提高性能）
+    int depth = (moveCount_ < 10) ? 2 : (moveCount_ < 20) ? 3 : 4;
+    
+    int bestScore = -1000000;
+    std::pair<int, int> bestMove = candidates[0];
+    
+    for (auto& move : candidates) 
+    {
+        int x = move.first, y = move.second;
+        if (board_[x][y] != EMPTY) continue;
+        
+        board_[x][y] = AI_PLAYER;
+        lastMove_ = {x, y};
+        int score = minimax(depth - 1, false, -1000000, 1000000);
+        board_[x][y] = EMPTY;
+        
+        if (score > bestScore) 
+        {
+            bestScore = score;
+            bestMove = move;
+        }
+    }
+    
+    return bestMove;
+}

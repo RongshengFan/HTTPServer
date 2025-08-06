@@ -81,6 +81,13 @@ private:
     // 判断某个空位是否靠近已有棋子
     bool isNearOccupied(int r, int c);
 
+    // 极小极大算法
+    int minimax(int depth, bool isMaximizing, int alpha, int beta);
+    // 获取候选落子位置
+    std::vector<std::pair<int, int>> getCandidateMoves();
+    // 优化后的威胁评估（支持指定玩家）
+    int evaluateThreat(int r, int c, const std::string& player);
+
 private:
     bool                                  gameOver_;
     int                                   userId_;
