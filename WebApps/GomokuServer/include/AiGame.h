@@ -81,12 +81,22 @@ private:
     // 判断某个空位是否靠近已有棋子
     bool isNearOccupied(int r, int c);
 
-    // 极小极大算法
-    int minimax(int depth, bool isMaximizing, int alpha, int beta);
-    // 获取候选落子位置
+    // 1. 候选落子位置筛选（优化后）
     std::vector<std::pair<int, int>> getCandidateMoves();
-    // 优化后的威胁评估（支持指定玩家）
+
+    // 2. 威胁评估函数（支持指定玩家，优化效率）
     int evaluateThreat(int r, int c, const std::string& player);
+
+    // 3. 极小极大算法（带Alpha-Beta剪枝和动态深度）
+    // 参数：搜索深度、是否最大化分数、alpha剪枝值、beta剪枝值、最佳分数引用
+    int minimax(int depth, bool isMaximizing, int alpha, int beta, int& bestMoveScore);
+
+    // 4. 候选点排序（提升剪枝效率）
+    // 参数：候选点列表、是否为AI回合（最大化分数）
+    void sortCandidates(std::vector<std::pair<int, int>>& candidates, bool isMaximizing);
+
+    // 5. 全局棋盘评估（替代原双重循环评估，减少计算）
+    int evaluateBoard();
 
 private:
     bool                                  gameOver_;
