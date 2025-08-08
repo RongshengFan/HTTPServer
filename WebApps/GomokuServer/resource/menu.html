@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>五子棋</title>
+    <title>棋语空间</title>
     <style>
-        /* 全局样式 */
-        body {
+        /* 全局样式重置与基础设置 */
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft YaHei", Arial, sans-serif;
-            background-color: #1e1e2f;
-            color: #fff;
-            overflow: hidden;
+        }
+
+        body {
+            font-family: "Inter", "Microsoft YaHei", Arial, sans-serif;
+            background-color: #ffffff;
+            color: #333333;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
         /* 加载动画容器 */
@@ -25,92 +29,163 @@
             align-items: center;
             height: 100vh;
             text-align: center;
+            padding: 20px;
         }
 
         /* 加载标题 */
         #loading-title {
-            font-size: 2em;
-            margin-bottom: 20px;
-            color: #00c3ff;
-            text-shadow: 0 0 5px #00c3ff, 0 0 10px #008bff;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #2c6ecb;
+            letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
         /* 进度条 */
         .progress-bar {
-            width: 300px;
-            height: 20px;
-            background: #444;
-            border-radius: 10px;
+            width: 100%;
+            max-width: 320px;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
             overflow: hidden;
-            box-shadow: 0 0 10px #000;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .progress-bar-inner {
             height: 100%;
-            background: linear-gradient(to right, #00c3ff, #00e1ff);
+            background: linear-gradient(90deg, #4285f4, #2c6ecb);
             width: 0;
-            transition: width 1.5s ease;
+            border-radius: 4px;
+            transition: width 1.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* 加载提示文字 */
         #loading-text {
-            margin-top: 15px;
-            font-size: 1.2em;
-            color: #ccc;
+            margin-top: 20px;
+            font-size: 1em;
+            color: #666666;
+            letter-spacing: 0.3px;
         }
 
         /* 菜单页面样式 */
         #menu-container {
             display: none;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            min-height: 100vh;
+            display: none;
+            flex-direction: column;
+        }
+
+        .header {
             text-align: center;
-            padding: 50px 20px;
+            margin-bottom: 50px;
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 30px;
-            color: #00c3ff;
-            text-shadow: 0 0 5px #00c3ff, 0 0 10px #008bff;
+            font-size: 2.2em;
+            color: #2c6ecb;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            font-weight: 400;
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 40px;
         }
 
         .menu-option {
-            margin: 10px 0;
-            font-size: 1.5em;
-            color: #fff;
+            padding: 18px 24px;
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            font-size: 1.15em;
+            color: #333;
             cursor: pointer;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .menu-option:hover {
-            color: #00e1ff;
-            text-shadow: 0 0 5px #00e1ff;
+            background-color: #eef2f7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: #dce4ee;
         }
 
-        .menu-border {
-            margin: 10px auto;
-            width: 80%;
-            height: 2px;
-            background: #00c3ff;
-            box-shadow: 0 0 5px #00c3ff;
-        }
-
-        /* 输入提示样式 */
-        #input-hint {
+        .menu-option::after {
+            content: "→";
+            color: #2c6ecb;
             font-size: 1.2em;
-            margin-top: 20px;
-            color: #00e1ff;
+            opacity: 0.7;
+            transition: transform 0.3s ease;
         }
 
-        input {
-            margin-top: 10px;
-            font-size: 1em;
-            padding: 5px 10px;
-            border-radius: 5px;
-            border: none;
-            outline: none;
+        .menu-option:hover::after {
+            transform: translateX(4px);
+            opacity: 1;
+        }
+
+        .menu-option .option-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: #2c6ecb;
+            color: white;
+            border-radius: 50%;
             text-align: center;
-            background-color: #333;
-            color: #fff;
+            line-height: 30px;
+            margin-right: 16px;
+            font-weight: 500;
+        }
+
+        .option-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+            margin: 30px 0;
+        }
+
+        .footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px 0;
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            #loading-title {
+                font-size: 2em;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .menu-option {
+                padding: 15px 20px;
+                font-size: 1em;
+            }
         }
     </style>
 </head>
@@ -118,56 +193,85 @@
 <body>
     <!-- 加载动画 -->
     <div id="loading-container">
-        <div id="loading-title">五子棋</div>
+        <div id="loading-title">棋语空间</div>
         <div class="progress-bar">
             <div class="progress-bar-inner"></div>
         </div>
-        <div id="loading-text">加载中...</div>
+        <div id="loading-text">正在准备您的智能体验...</div>
     </div>
 
     <!-- 菜单页面 -->
     <div id="menu-container">
-        <h1>欢迎来到五子棋</h1>
-        <div class="menu-border"></div>
-        <div class="menu-option" id="play-ai">[1] 对战AI</div>
-        <div class="menu-option">[2] 匹配玩家</div>
-        <div class="menu-option">[0] 退出游戏</div>
+        <div class="header">
+            <h1>欢迎来到棋语空间</h1>
+            <p class="subtitle">智能对弈与聊天的全新体验</p>
+        </div>
+
+        <div class="menu-list">
+            <div class="menu-option" id="play-ai">
+                <div class="option-content">
+                    <span class="option-number">1</span>
+                    <span>五子棋AI对战</span>
+                </div>
+            </div>
+            <div class="menu-option" id="ai-chat">
+                <div class="option-content">
+                    <span class="option-number">2</span>
+                    <span>大模型AI聊天</span>
+                </div>
+            </div>
+            <div class="menu-option" id="exit-game">
+                <div class="option-content">
+                    <span class="option-number">0</span>
+                    <span>退出应用</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="footer">
+            棋语空间 © 2025 | 智能交互平台
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded'); // 调试日志
+            console.log('页面加载完成');
             
             const progressBar = document.querySelector('.progress-bar-inner');
             const loadingContainer = document.getElementById('loading-container');
             const menuContainer = document.getElementById('menu-container');
 
             if (!progressBar || !loadingContainer || !menuContainer) {
-                console.error('Required elements not found');
+                console.error('未找到必要的页面元素');
                 return;
             }
 
             // 强制触发重排以确保动画生效
             void progressBar.offsetWidth;
             
-            // 设置进度条
+            // 设置进度条动画
             progressBar.style.width = '100%';
 
             // 监听过渡结束事件
             progressBar.addEventListener('transitionend', function() {
-                console.log('Progress bar animation completed');
-                loadingContainer.style.display = 'none';
-                menuContainer.style.display = 'block';
+                console.log('进度条动画完成');
+                loadingContainer.style.opacity = '0';
+                setTimeout(() => {
+                    loadingContainer.style.display = 'none';
+                    menuContainer.style.display = 'flex';
+                }, 300);
             });
 
             // 添加超时保护
             setTimeout(() => {
                 if (loadingContainer.style.display !== 'none') {
-                    console.log('Timeout triggered - forcing menu display');
+                    console.log('超时保护 - 强制显示菜单');
                     loadingContainer.style.display = 'none';
-                    menuContainer.style.display = 'block';
+                    menuContainer.style.display = 'flex';
                 }
-            }, 2000); // 2秒后强制显示菜单
+            }, 2000);
         });
 
         // 对战AI功能
@@ -182,14 +286,13 @@
             })
             .then(response => response.text())
             .then(html => {
-                // 完全清除当前页面
                 document.open();
                 document.write(html);
                 document.close();
                 
-                // 确保在页面完全加载后初始化
+                // 确保游戏初始化
                 if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', function() {
+                    document.addEventListener('DOMContentLoaded', () => {
                         if (typeof initializeGame === 'function') {
                             initializeGame();
                         }
@@ -201,7 +304,7 @@
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('错误:', error);
                 alert('启动AI对战失败，请稍后重试！');
             });
         }
@@ -209,25 +312,85 @@
         // 绑定点击事件到对战AI按钮
         document.getElementById('play-ai').addEventListener('click', startAiGame);
 
-        // 添加页面刷新/关闭时的处理
+        // AI聊天功能
+        function startAiChat() {
+            const userId = sessionStorage.getItem('userId');
+            
+            fetch('/ai/chat', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/html'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            })
+            .catch(error => {
+                console.error('错误:', error);
+                alert('启动AI聊天失败，请稍后重试！');
+            });
+        }
+
+        // 绑定点击事件到AI聊天按钮
+        document.getElementById('ai-chat').addEventListener('click', startAiChat);
+
+        // 退出游戏功能
+        function exitGame() {
+            const userId = sessionStorage.getItem('userId');
+            if (!userId) {
+                window.location.href = '/entry';
+                return;
+            }
+
+            try {
+                const data = new Blob([JSON.stringify({
+                    userId: userId,
+                    type: 'exit',
+                    gameType: 0
+                })], { type: 'application/json' });
+
+                const success = navigator.sendBeacon('/user/logout', data);
+                
+                if (!success) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/user/logout', false);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    xhr.send(JSON.stringify({
+                        userId: userId,
+                        type: 'exit',
+                        gameType: 0
+                    }));
+                }
+
+                sessionStorage.removeItem('userId');
+                window.location.href = '/entry';
+            } catch (error) {
+                console.error('退出游戏错误:', error);
+                alert('退出失败，请重试！');
+            }
+        }
+        // 绑定退出按钮事件
+        document.getElementById('exit-game').addEventListener('click', exitGame);
+
+        // 页面刷新/关闭时的处理
         window.addEventListener('beforeunload', function(e) {
             const userId = sessionStorage.getItem('userId');
             if (userId) {
                 try {
-                    // 创建 Blob 对象，指定 content-type
                     const data = new Blob([JSON.stringify({
                         userId: userId,
                         type: 'refresh',
                         gameType: 0
                     })], { type: 'application/json' });
 
-                    // 使用 navigator.sendBeacon 发送异步请求
                     const success = navigator.sendBeacon('/user/logout', data);
                     
-                    // 如果 sendBeacon 失败，尝试使用同步 XMLHttpRequest
                     if (!success) {
                         const xhr = new XMLHttpRequest();
-                        xhr.open('POST', '/user/logout', false); // 同步请求
+                        xhr.open('POST', '/user/logout', false);
                         xhr.setRequestHeader('Content-Type', 'application/json');
                         xhr.send(JSON.stringify({
                             userId: userId,
@@ -236,12 +399,12 @@
                         }));
                     }
                 } catch (error) {
-                    console.error('Logout error:', error);
+                    console.error('登出错误:', error);
                 }
             }
         });
 
-        // 添加页面加载时的用户检查
+        // 页面加载时的用户检查
         window.addEventListener('load', function() {
             const userId = sessionStorage.getItem('userId');
             if (!userId) {

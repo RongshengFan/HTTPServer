@@ -6,6 +6,7 @@
 #include "../include/handlers/LogoutHandler.h"
 #include "../include/handlers/AiGameMoveHandler.h"
 #include "../include/handlers/GameBackendHandler.h"
+#include "../include/handlers/ChatHandler.h"
 #include "../include/GomokuServer.h"
 #include "../../../HttpServer/include/http/HttpRequest.h"
 #include "../../../HttpServer/include/http/HttpResponse.h"
@@ -34,7 +35,7 @@ void GomokuServer::start()
 void GomokuServer::initialize()
 {
     // 初始化数据库连接池
-    http::MysqlUtil::init("tcp://127.0.0.1:3306", "root", "root", "Gomoku", 10);
+    http::MysqlUtil::init("tcp://182.92.76.127:3369", "zo_wms", "kekoukele", "gomoku", 10);
     // 初始化会话
     initializeSession();
     // 初始化中间件
@@ -84,6 +85,9 @@ void GomokuServer::initializeRouter()
     [this](const http::HttpRequest& req, http::HttpResponse* resp) {
             restartChessGameVsAi(req, resp);
     });
+    // AI聊天相关
+    httpServer_.Get("/ai/chat", std::make_shared<ChatHandler>(this));
+    httpServer_.Post("/ai/chat/completion", std::make_shared<ChatHandler>(this));
 
     // 后台界面
     httpServer_.Get("/backend", std::make_shared<GameBackendHandler>(this));

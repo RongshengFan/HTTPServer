@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI聊天助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#F5F7FA',
+                        user: '#E8F3FF',
+                        assistant: '#F5F5F5',
+                        text: '#333333',
+                        lightText: '#666666'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .message-appear {
+                animation: fadeIn 0.3s ease-out;
+            }
+            .typing-pulse {
+                animation: pulse 1.4s infinite ease-in-out both;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-white text-text font-sans min-h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <button onclick="window.location.href='/menu'" class="p-2 rounded-full hover:bg-secondary transition-colors duration-200">
+                    <i class="fa fa-arrow-left text-lightText"></i>
+                </button>
+                <h1 class="text-xl font-semibold text-text">AI聊天助手</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="clear-chat" class="text-sm text-primary hover:text-primary/80 transition-colors duration-200">
+                    清空记录
+                </button>
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <i class="fa fa-robot"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 聊天容器 -->
+    <main class="flex-1 container mx-auto px-4 py-6 max-w-3xl w-full">
+        <div class="chat-history space-y-6 mb-6 min-h-[calc(100vh-180px)]" id="chat-history">
+            <!-- 欢迎消息 -->
+            <div class="message assistant message-appear">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center text-primary">
+                        <i class="fa fa-robot"></i>
+                    </div>
+                    <div class="message-content bg-assistant rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%]">
+                        你好！我是AI助手，有什么可以帮助你的吗？
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="input-area bg-white border border-gray-200 rounded-full shadow-md p-2 flex items-center gap-2 relative">
+            <input 
+                type="text" 
+                id="message-input" 
+                placeholder="输入消息..." 
+                class="flex-1 px-4 py-3 focus:outline-none text-base rounded-full"
+            >
+            <button id="send-button" class="bg-primary hover:bg-primary/90 text-white rounded-full p-3 transition-all duration-200 transform hover:scale-105 active:scale-95">
+                <i class="fa fa-paper-plane"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- 底部信息 -->
+    <footer class="text-center text-lightText text-xs py-4 border-t border-gray-200">
+        <p>AI聊天助手 · 基于先进语言模型构建</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatHistory = document.getElementById('chat-history');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const clearChatBtn = document.getElementById('clear-chat');
+            
+            // 检查用户登录状态
+            const userId = sessionStorage.getItem('userId');
+            if (!userId) {
+                window.location.href = '/entry';
+                return;
+            }
+            
+            // 发送消息函数
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (!message) return;
+                
+                // 添加用户消息到聊天历史
+                addMessageToHistory('user', message);
+                
+                // 清空输入框并获取焦点
+                messageInput.value = '';
+                messageInput.focus();
+                
+                // 显示"正在输入"提示
+                const typingIndicator = createTypingIndicator();
+                chatHistory.appendChild(typingIndicator);
+                scrollToBottom();
+                
+                // 发送请求到服务器
+                fetch('/ai/chat/completion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络错误');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 移除"正在输入"提示
+                    chatHistory.removeChild(typingIndicator);
+                    
+                    // 添加AI回复到聊天历史
+                    if (data && data.choices && data.choices.length > 0) {
+                        addMessageToHistory('assistant', data.choices[0].message.content);
+                    } else {
+                        addMessageToHistory('assistant', '抱歉，我无法理解你的问题。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 移除"正在输入"提示
+                    if (typingIndicator && typingIndicator.parentNode === chatHistory) {
+                        chatHistory.removeChild(typingIndicator);
+                    }
+                    addMessageToHistory('assistant', '抱歉，请求失败，请稍后重试。');
+                });
+            }
+            
+            // 创建"正在输入"指示器
+            function createTypingIndicator() {
+                const indicatorDiv = document.createElement('div');
+                indicatorDiv.className = 'message assistant message-appear';
+                
+                const content = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center text-primary">
+                            <i class="fa fa-robot"></i>
+                        </div>
+                        <div class="bg-assistant rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%]">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-gray-400 rounded-full typing-pulse"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full typing-pulse" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full typing-pulse" style="animation-delay: 0.4s"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                indicatorDiv.innerHTML = content;
+                return indicatorDiv;
+            }
+            
+            // 添加消息到聊天历史
+            function addMessageToHistory(role, content) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${role} message-appear`;
+                
+                let contentHtml = '';
+                if (role === 'user') {
+                    contentHtml = `
+                        <div class="flex items-start justify-end gap-3">
+                            <div class="message-content bg-user rounded-2xl rounded-tr-none px-4 py-3 max-w-[85%]">
+                                ${escapeHtml(content)}
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-gray-500">
+                                <i class="fa fa-user"></i>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    contentHtml = `
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center text-primary">
+                                <i class="fa fa-robot"></i>
+                            </div>
+                            <div class="message-content bg-assistant rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%]">
+                                ${escapeHtml(content)}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                messageDiv.innerHTML = contentHtml;
+                chatHistory.appendChild(messageDiv);
+                
+                scrollToBottom();
+            }
+            
+            // 转义HTML防止XSS
+            function escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+            
+            // 滚动到最底部
+            function scrollToBottom() {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+            
+            // 清空聊天记录
+            function clearChatHistory() {
+                if (confirm('确定要清空聊天记录吗？')) {
+                    // 保留欢迎消息
+                    const welcomeMessage = chatHistory.querySelector('.message:first-child');
+                    chatHistory.innerHTML = '';
+                    if (welcomeMessage) {
+                        chatHistory.appendChild(welcomeMessage);
+                    }
+                }
+            }
+            
+            // 绑定发送按钮点击事件
+            sendButton.addEventListener('click', sendMessage);
+            
+            // 绑定回车键发送消息
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // 绑定清空聊天记录按钮
+            clearChatBtn.addEventListener('click', clearChatHistory);
+            
+            // 自动聚焦输入框
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>

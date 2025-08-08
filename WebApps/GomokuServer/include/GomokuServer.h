@@ -99,7 +99,7 @@ private:
     friend class LogoutHandler;
     friend class AiGameMoveHandler;
     friend class GameBackendHandler;
-
+    friend class ChatHandler;
 private:
     enum GameType
     {

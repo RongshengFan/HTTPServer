@@ -84,12 +84,12 @@ private:
     int evaluateThreat(int r, int c, const std::string& player);
 
     // 3. 极小极大算法（带Alpha-Beta剪枝和动态深度）
-    int minimax(int depth, bool isMaximizing, int alpha, int beta, int& bestMoveScore);
+    int minimax(int depth, bool isMaximizing, int alpha, int beta);
 
     // 4. 候选点排序（提升剪枝效率）
     void sortCandidates(std::vector<std::pair<int, int>>& candidates, bool isMaximizing);
 
-    // 5. 全局棋盘评估
+    // 5. 全局棋盘评估iii
     int evaluateBoard();
 
 private:

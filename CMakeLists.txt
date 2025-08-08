@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 在文件开头添加 OpenSSL 查找
 find_package(OpenSSL REQUIRED)
-
+find_package(CURL REQUIRED)
 # 添加头文件路径
 include_directories(
     ${PROJECT_SOURCE_DIR}
@@ -72,6 +72,7 @@ target_link_libraries(simple_server
     mysqlclient
     ssl
     crypto
+    CURL::libcurl
 )
 
 # 打印调试信息

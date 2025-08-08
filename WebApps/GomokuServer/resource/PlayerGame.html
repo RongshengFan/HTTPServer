@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>五子棋 - 人人对战</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .player-info {
+            display: flex;
+            width: 600px;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .player {
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+        .current-player {
+            background-color: #4CAF50;
+        }
+        .board-container {
+            border: 2px solid #333;
+        }
+        .game-status {
+            margin: 15px 0;
+            color: #fff;
+            font-size: 18px;
+        }
+        .control-buttons {
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="player-info">
+            <div class="player" id="player1">玩家1: 加载中...</div>
+            <div class="player" id="player2">玩家2: 加载中...</div>
+        </div>
+
+        <div class="game-status" id="status">准备开始...</div>
+
+        <div class="board-container" id="board">
+            <!-- 棋盘正在生成 -->
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn" id="surrender">认输</button>
+            <button class="btn" style="margin-left: 10px;" onclick="window.location.href='/menu'">返回菜单</button>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        const roomId = new URLSearchParams(window.location.search).get('roomId');
+        const userId = sessionStorage.getItem('userId');
+        let board = []; // 棋盘数据
+        let currentPlayer = ''; // 当前回合玩家ID
+        let myColor = ''; // 自己的棋子颜色（black/white）
+        let ws = null; // WebSocket连接（用于实时通信）
+
+        // 页面加载时初始化
+        window.onload = () => {
+            if (!roomId || !userId) {
+                alert('参数错误');
+                window.location.href = '/menu';
+                return;
+            }
+
+            // 1. 获取房间信息（玩家列表等）
+            fetch(`/room/info?roomId=${roomId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code !== 0) {
+                        alert('获取房间信息失败');
+                        window.location.href = '/menu';
+                        return;
+                    }
+                    initRoom(data.room);
+                });
+
+            // 2. 初始化WebSocket（实时同步落子）
+            initWebSocket();
+        };
+
+        // 初始化房间信息
+        function initRoom(room) {
+            // 显示玩家信息
+            document.getElementById('player1').textContent = `玩家1: ${room.player1Name}`;
+            document.getElementById('player2').textContent = `玩家2: ${room.player2Name}`;
+
+            // 确定自己的颜色和初始回合
+            myColor = room.player1 === userId ? 'black' : 'white';
+            currentPlayer = room.player1; // 默认玩家1先手
+            updateStatus();
+
+            // 初始化棋盘（15x15）
+            initBoard();
+        }
+
+        // 初始化棋盘
+        function initBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            board = Array(15).fill().map(() => Array(15).fill(''));
+
+            for (let i = 0; i < 15; i++) {
+                const row = document.createElement('div');
+                row.className = 'board-row';
+                for (let j = 0; j < 15; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => handleCellClick(i, j));
+                    row.appendChild(cell);
+                }
+                boardEl.appendChild(row);
+            }
+        }
+
+        // 处理落子点击
+        function handleCellClick(row, col) {
+            // 检查是否是自己的回合
+            if (currentPlayer !== userId) {
+                alert('等待对方落子...');
+                return;
+            }
+            // 检查是否为空位
+            if (board[row][col] !== '') return;
+
+            // 发送落子请求到服务器
+            ws.send(JSON.stringify({
+                type: 'move',
+                roomId: roomId,
+                userId: userId,
+                row: row,
+                col: col
+            }));
+        }
+
+        // 初始化WebSocket
+        function initWebSocket() {
+            // 注意：生产环境用wss://
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws?roomId=${roomId}&userId=${userId}`);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onclose = () => {
+                alert('连接已断开，返回菜单');
+                window.location.href = '/menu';
+            };
+        }
+
+        // 处理WebSocket消息（同步落子、胜负等）
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'move':
+                    // 同步对手落子
+                    board[data.row][data.col] = data.userId === userId ? myColor : (myColor === 'black' ? 'white' : 'black');
+                    renderBoard();
+                    currentPlayer = data.nextPlayer;
+                    updateStatus();
+                    break;
+                case 'win':
+                    alert(data.winner === userId ? '恭喜你获胜！' : '很遗憾，你输了！');
+                    window.location.href = '/menu';
+                    break;
+                case 'surrender':
+                    alert(data.userId === userId ? '你已认输' : '对方已认输，你获胜！');
+                    window.location.href = '/menu';
+                    break;
+            }
+        }
+
+        // 更新棋盘渲染
+        function renderBoard() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                cell.className = 'cell'; // 重置样式
+                if (board[row][col] === 'black') {
+                    cell.classList.add('black-stone');
+                } else if (board[row][col] === 'white') {
+                    cell.classList.add('white-stone');
+                }
+            });
+        }
+
+        // 更新状态提示
+        function updateStatus() {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = currentPlayer === userId ? '你的回合' : '对方回合';
+            
+            // 高亮当前玩家
+            document.getElementById('player1').classList.remove('current-player');
+            document.getElementById('player2').classList.remove('current-player');
+            const currentPlayerEl = currentPlayer === room.player1 ? 'player1' : 'player2';
+            document.getElementById(currentPlayerEl).classList.add('current-player');
+        }
+
+        // 认输按钮
+        document.getElementById('surrender').addEventListener('click', () => {
+            if (confirm('确定要认输吗？')) {
+                ws.send(JSON.stringify({
+                    type: 'surrender',
+                    roomId: roomId,
+                    userId: userId
+                }));
+            }
+        });
+    </script>
+</body>
+</html>
