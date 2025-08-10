@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include <climits>
 
-// 评分权重 - 平衡攻防
+// 评分权重
 const int SCORE_AI_FIVE = 1000000;      // AI五连
 const int SCORE_AI_FOUR = 100000;       // AI活四
 const int SCORE_AI_BLOCKED_FOUR = 10000;// AI冲四
@@ -22,7 +22,6 @@ const int SCORE_PLAYER_TWO = 300;       // 玩家活二
 // 方向数组：水平、垂直、对角线、反对角线
 const int DIRECTIONS[4][2] = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
 
-// 优化：使用更高效的数据结构和算法
 AiGame::AiGame(int userId)
     : gameOver_(false)
     , userId_(userId)
@@ -71,7 +70,7 @@ void AiGame::aiMove()
     }
 }
 
-// 优化：简化胜利检查
+// 胜利检查
 bool AiGame::checkWin(int x, int y, const std::string& player) 
 {
     const int dx[] = {1, 0, 1, 1};
@@ -103,7 +102,7 @@ std::vector<std::pair<int, int>> AiGame::getCandidateMoves()
     std::unordered_set<long long> uniqueMoves;
     std::vector<std::pair<int, int>> candidates;
     
-    // 检查整个棋盘，只关注有棋子周围的空位
+    // 检查棋盘，只关注有棋子周围的空位
     for (int r = 0; r < BOARD_SIZE; r++) {
         for (int c = 0; c < BOARD_SIZE; c++) {
             if (board_[r][c] == EMPTY) continue;
@@ -239,7 +238,7 @@ int AiGame::evaluateBoard()
         playerScore += evaluateThreat(move.first, move.second, HUMAN_PLAYER);
     }
     
-    // 平衡攻防：进攻分数 + 防守分数（玩家威胁的负值）
+    // 进攻分数 + 防守分数（玩家威胁的负值）
     return aiScore * 0.7 - playerScore * 1.3;
 }
 

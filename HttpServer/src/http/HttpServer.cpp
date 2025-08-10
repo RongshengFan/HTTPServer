@@ -89,7 +89,7 @@ void HttpServer::onMessage(const muduo::net::TcpConnectionPtr &conn,
 {
     try
     {
-        // 这层判断只是代表是否支持ssl
+        // 这层判断只是代表是否支持ssl, 但目前并没有实现SSL，我在服务器代理层实现了，这层也不必要
         if (useSSL_)
         {
             LOG_INFO << "onMessage useSSL_ is true";

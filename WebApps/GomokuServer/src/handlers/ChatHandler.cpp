@@ -34,7 +34,6 @@ void ChatHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
             errorResp["message"] = "Method Not Allowed";
             std::string errorBody = errorResp.dump(4);
 
-            // 修正：明确使用http::HttpResponse
             server_->packageResp(req.getVersion(), http::HttpResponse::k405MethodNotAllowed,
                                 "Method Not Allowed", true, "application/json", 
                                 errorBody.size(), errorBody, resp);
@@ -45,7 +44,6 @@ void ChatHandler::handle(const http::HttpRequest& req, http::HttpResponse* resp)
         errorResp["message"] = e.what();
         std::string errorBody = errorResp.dump(4);
 
-        // 修正：明确使用http::HttpResponse
         server_->packageResp(req.getVersion(), http::HttpResponse::k500InternalServerError,
                             "Internal Server Error", true, "application/json",
                             errorBody.size(), errorBody, resp);
@@ -58,7 +56,6 @@ void ChatHandler::handleChatPage(const http::HttpRequest& req, http::HttpRespons
     LOG_INFO << "session->getValue(\"isLoggedIn\") = " << session->getValue("isLoggedIn");
     if (session->getValue("isLoggedIn") != "true") {
         // 用户未登录，重定向到登录页面
-        // 修正：明确使用http::HttpResponse
         resp->setStatusLine(req.getVersion(), http::HttpResponse::k301MovedPermanently, "Moved Permanently");
         resp->addHeader("Location", "/entry");
         resp->setCloseConnection(true);

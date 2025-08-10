@@ -28,9 +28,6 @@ void LoginHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp
         {
             // 获取会话
             auto session = server_->getSessionManager()->getSession(req, resp);
-            // 会话都不是同一个会话，因为会话判断是不是同一个会话是通过请求报文中的cookie来判断的
-            // 所以不同页面的访问是不可能是相同的会话的，只有该页面前面访问过服务端，才会有会话记录
-            // 那么判断用户是否在其他地方登录中不能通过会话来判断
             
             // 在会话中存储用户信息
             session->setValue("userId", std::to_string(userId));
@@ -61,7 +58,6 @@ void LoginHandler::handle(const http::HttpRequest &req, http::HttpResponse *resp
             }
             else
             {
-                // FIXME: 当前该用户正在其他地方登录中，将原有登录用户强制下线更好
                 // 不允许重复登录，
                 json failureResp;
                 failureResp["success"] = false;

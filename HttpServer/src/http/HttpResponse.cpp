@@ -7,14 +7,14 @@ void HttpResponse::appendToBuffer(muduo::net::Buffer* outputBuf) const
 {
     // HttpResponse封装的信息格式化输出
     char buf[32]; 
-    // 为什么不把状态信息放入格式化字符串中，因为状态信息有长有短，不方便定义一个固定大小的内存存储
+    // 不把状态信息放入格式化字符串中，因为状态信息有长有短，不方便定义一个固定大小的内存存储
     snprintf(buf, sizeof buf, "%s %d ", httpVersion_.c_str(), statusCode_);
     
     outputBuf->append(buf);
     outputBuf->append(statusMessage_);
     outputBuf->append("\r\n");
 
-    if (closeConnection_) // 思考一下这些地方是不是可以直接移入近headers_中
+    if (closeConnection_) 
     {
         outputBuf->append("Connection: close\r\n");
     }
@@ -26,7 +26,7 @@ void HttpResponse::appendToBuffer(muduo::net::Buffer* outputBuf) const
     }
 
     for (const auto& header : headers_)
-    { // 为什么这里不用格式化字符串？因为key和value的长度不定
+    { // 不用格式化字符串,因为key和value的长度不定
         outputBuf->append(header.first);
         outputBuf->append(": "); 
         outputBuf->append(header.second);
