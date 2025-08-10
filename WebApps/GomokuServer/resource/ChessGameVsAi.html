@@ -331,19 +331,31 @@
 
         // 重新开始游戏
         function restartGame() {
-            isGameOver = false; // 重置游戏结束标志
-            isThinking = false; // 重置 AI 思考状态标志
-            gameState.boardState = Array(15).fill().map(() => Array(15).fill("empty")); // 重新初始化棋盘状态
-            const cells = document.querySelectorAll('.cell');
-            cells.forEach(cell => {
-                cell.classList.remove('black', 'white'); // 移除所有棋子类
-                cell.addEventListener('click', handleCellClick); // 重新添加点击事件
+            showThinkingMessage();
+            // 发送重新开始请求到后端
+            fetch('/aiBot/start', {  // 假设后端开始游戏的接口是/aiBot/start
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('重新开始失败');
+                return res.text();
+            })
+            .then(() => {
+                // 后端状态重置成功后，重置前端
+                isGameOver = false;
+                isThinking = false;
+                gameState.reset();
+                createBoard();  // 重新创建棋盘确保干净状态
+                addEventListeners();
+                document.getElementById('winner-display').style.display = 'none';
+                hideThinkingMessage();
+            })
+            .catch(err => {
+                console.error('重新开始错误:', err);
+                hideThinkingMessage();
+                alert('重新开始失败，请重试！');
             });
-            document.getElementById('winner-display').style.display = 'none'; // 隐藏获胜信息
-            document.getElementById('thinking-message').style.display = 'none'; // 隐藏思考提示
-            document.getElementById('loading-animation').style.display = 'none'; // 隐藏加载动画
-            gameState.currentPlayer = 'black'; // 重置当前玩家
-            gameState.isGameActive = true; // 重置游戏状态
         }
 
         // 添加事件监听
