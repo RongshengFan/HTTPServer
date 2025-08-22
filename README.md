@@ -84,9 +84,9 @@ HttpServer/
 ```sh
 sudo apt install g++ cmake make
 ```  
-#### boost库和muduo网络库的安装教程链接：  
-boost库：https://blog.csdn.net/QIANGWEIYUAN/article/details/88792874  
-muduo库：https://blog.csdn.net/QIANGWEIYUAN/article/details/89023980  
+#### boost库和muduo网络库的安装：  
+自行网络搜索即可
+
 #### 其他第三方库依赖
 ```
 sudo apt upgrade
